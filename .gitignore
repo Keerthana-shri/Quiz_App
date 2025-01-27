@@ -1,0 +1,10 @@
+venv/
+venv1/
+.env
+aws/
+app/
+annalect-pylect-infra-okta-e2e4a87b1bf2.zip
+awscliv2.zip
+__pycache__/
+*.pyc
+*.pyo
