@@ -1,17 +1,27 @@
-from pydantic import BaseModel
- 
+from pydantic import BaseModel, Field
+from enum import Enum
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    CANDIDATE = "candidate"
+
 class UserBase(BaseModel):
     username: str
- 
+
 class UserCreate(UserBase):
     password: str
- 
-class User(UserBase):
+    role: UserRole = Field(default=UserRole.CANDIDATE)  # Set "candidate" as default
+
+class UserSchema(UserBase):
     id: int
- 
+    role: UserRole
+
     class Config:
         from_attributes = True
- 
+
+class UserResponse(UserSchema):
+    pass  # Alias for clarity in response models
+
 class Token(BaseModel):
     access_token: str
     token_type: str
