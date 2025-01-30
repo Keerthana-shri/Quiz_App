@@ -35,7 +35,6 @@ class QuizRepository:
         quiz = self.get_quiz_by_id(db, quiz_id)
         if not quiz:
             return False
-        # Deleting associated questions and their options
         questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
         for question in questions:
             db.query(QuestionOption).filter(QuestionOption.question_id == question.id).delete()
@@ -58,11 +57,11 @@ class QuestionRepository:
         db.commit()
         db.refresh(db_question)
         
-        # Setting the question_id for each option
         for option in question.options:
+            is_correct = option.is_correct if 'is_correct' in option else (option.option_text == question.correct_answer)
             db_option = QuestionOption(
                 option_text=option.option_text,
-                is_correct=option.is_correct,
+                is_correct=is_correct,
                 question_id=db_question.id
             )
             db.add(db_option)
@@ -77,13 +76,12 @@ class QuestionRepository:
             return None
         for key, value in question_update.dict(exclude_unset=True).items():
             if key == "options":
-                # Deleting existing options
                 db.query(QuestionOption).filter(QuestionOption.question_id == question_id).delete()
-                # Adding new options
                 for option in value:
+                    is_correct = option["is_correct"] if 'is_correct' in option else (option["option_text"] == question_update.correct_answer)
                     db_option = QuestionOption(
                         option_text=option["option_text"],
-                        is_correct=option["is_correct"],
+                        is_correct=is_correct,
                         question_id=question_id
                     )
                     db.add(db_option)

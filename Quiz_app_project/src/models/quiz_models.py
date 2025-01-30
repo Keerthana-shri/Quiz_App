@@ -8,7 +8,7 @@ class Quiz(Base):
     title = Column(String, index=True, nullable=False)
     topic = Column(String, index=True, nullable=False)
     difficulty = Column(String, index=True, nullable=False)
-    timer = Column(Integer, nullable=False)  # Added timer field
+    timer = Column(Integer, nullable=False)
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
 
 class Question(Base):
@@ -16,9 +16,9 @@ class Question(Base):
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
     text = Column(Text, nullable=False)
-    question_type = Column(String, nullable=False)  # MCQ, True/False, Fill in the Blanks
+    question_type = Column(String, nullable=False)
     correct_answer = Column(Text, nullable=False)
-    explanation = Column(Text, nullable=True)  # Added explanation field
+    explanation = Column(Text, nullable=True)
     image_url = Column(String, nullable=True)
     quiz = relationship("Quiz", back_populates="questions")
     options = relationship("QuestionOption", back_populates="question")
@@ -28,5 +28,5 @@ class QuestionOption(Base):
     id = Column(Integer, primary_key=True, index=True)
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
     option_text = Column(Text, nullable=False)
-    is_correct = Column(Boolean, nullable=False, default=False)  # Added is_correct field
+    is_correct = Column(Boolean, nullable=False, default=False)
     question = relationship("Question", back_populates="options")

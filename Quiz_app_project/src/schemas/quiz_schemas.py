@@ -10,11 +10,11 @@ class QuestionType(str, Enum):
 class DifficultyLevel(str, Enum):
     EASY = "Easy"
     MEDIUM = "Medium"
-    HARD = "Hard"
+    HARD = "HARD"
 
 class QuestionOptionSchema(BaseModel):
     option_text: str
-    is_correct: bool
+    is_correct: Optional[bool] = None  # Made is_correct optional
 
     class Config:
         orm_mode = True
@@ -41,10 +41,7 @@ class QuestionUpdate(BaseModel):
     explanation: Optional[str] = None
     image_url: Optional[str] = None
     options: List[QuestionOptionSchema] = [] 
-    quiz_id: int
-
-    class Config:
-        orm_mode = True
+    quiz_id: Optional[int]
 
 class QuestionResponse(QuestionSchema):
     pass
@@ -55,9 +52,6 @@ class QuizSchema(BaseModel):
     difficulty: DifficultyLevel
     timer: int 
 
-    class Config:
-        orm_mode = True
-
 class QuizCreate(QuizSchema):
     pass
 
@@ -67,8 +61,9 @@ class QuizUpdate(BaseModel):
     difficulty: Optional[DifficultyLevel]
     timer: Optional[int]
 
-    class Config:
-        orm_mode = True
-
 class QuizResponse(QuizSchema):
     id: int
+    questions: List[QuestionResponse]  # Include questions in the response
+
+    class Config:
+        orm_mode = True
