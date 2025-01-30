@@ -1,21 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from src.schemas.quiz_schemas import QuizCreate, QuizResponse, QuizUpdate, QuestionCreate, QuestionResponse, QuestionUpdate
+from src.schemas.quiz_schemas import QuizCreate, QuizResponse, QuizUpdate, QuestionCreate, QuestionResponse, QuestionUpdate, QuestionOptionSchema
 from src.services.quiz_services import (
     create_quiz_service, create_question_service, get_quiz_service,
     update_quiz_service, delete_quiz_service, get_question_service,
-    update_question_service, delete_question_service
+    update_question_service, delete_question_service, get_random_questions, get_quizzes_by_category
 )
 from src.config.database import get_db
 
 router = APIRouter()
 
-@router.post("/quizzes/", response_model=QuizResponse)
+@router.get("/quizzes/{quiz_id}/random-questions")
+def fetch_random_questions(quiz_id: int, db: Session = Depends(get_db)):
+    return get_random_questions(db, quiz_id)
+
+@router.get("/quizzes/category")
+def fetch_quizzes_by_category(topic: str, difficulty: str, db: Session = Depends(get_db)):
+    return get_quizzes_by_category(db, topic, difficulty)
+
+@router.post("/quizzes/")
 def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     created_quiz = create_quiz_service(db, quiz)
     if created_quiz is None:
         raise HTTPException(status_code=400, detail="Quiz with this title already exists.")
-    return created_quiz
+    return {"message": f"Quiz '{created_quiz.title}' with id {created_quiz.id} created successfully."}
 
 @router.get("/quizzes/{quiz_id}", response_model=QuizResponse)
 def get_quiz(quiz_id: int, db: Session = Depends(get_db)):
@@ -40,13 +48,24 @@ def delete_quiz(quiz_id: int, db: Session = Depends(get_db)):
 
 @router.post("/questions/", response_model=QuestionResponse)
 def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
-    created_question = create_question_service(db, question)
-    if created_question is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Question with this text and quiz association already exists."
-        )
-    return created_question
+    created_question, quiz = create_question_service(db, question)
+    if created_question == "QuizNotFound":
+        raise HTTPException(status_code=404, detail=f"Quiz with id {question.quiz_id} doesn't exist")
+    elif created_question == "QuestionExists":
+        raise HTTPException(status_code=400, detail="Question with this text and quiz association already exists.")
+    
+    # Serialize options as a list of QuestionOptionSchema
+    options = [QuestionOptionSchema(option_text=option.option_text, is_correct=option.is_correct) for option in created_question.options]
+    
+    return {
+        "text": created_question.text,
+        "question_type": created_question.question_type,
+        "correct_answer": created_question.correct_answer,
+        "explanation": created_question.explanation,
+        "image_url": created_question.image_url,
+        "quiz_id": created_question.quiz_id,
+        "options": options
+    }
 
 @router.get("/questions/{question_id}", response_model=QuestionResponse)
 def get_question(question_id: int, db: Session = Depends(get_db)):

@@ -12,66 +12,57 @@ class DifficultyLevel(str, Enum):
     MEDIUM = "Medium"
     HARD = "Hard"
 
-class QuestionBase(BaseModel):
-    text: str
-    question_type: QuestionType
-    options: str
-    correct_answer: str
-    explanation: Optional[str] = None
-    image_url: Optional[str] = None
+class QuestionOptionSchema(BaseModel):
+    option_text: str
+    is_correct: bool
 
     class Config:
         orm_mode = True
 
-class QuestionCreate(BaseModel):
+class QuestionSchema(BaseModel):
     text: str
     question_type: QuestionType
-    options: str
     correct_answer: str
-    explanation: Optional[str]
-    image_url: Optional[str]
+    explanation: Optional[str] = None
+    image_url: Optional[str] = None
+    options: List[QuestionOptionSchema] = [] 
     quiz_id: int
+
+    class Config:
+        orm_mode = True
+
+class QuestionCreate(QuestionSchema):
+    pass
 
 class QuestionUpdate(BaseModel):
     text: Optional[str]
     question_type: Optional[QuestionType]
-    options: Optional[str]
     correct_answer: Optional[str]
-    explanation: Optional[str]
-    image_url: Optional[str]
-
-    class Config:
-        orm_mode = True
-
-class QuestionResponse(BaseModel):
-    id: int
-    text: str
-    question_type: QuestionType
-    options: str
-    correct_answer: str
-    explanation: Optional[str]
-    image_url: Optional[str]
+    explanation: Optional[str] = None
+    image_url: Optional[str] = None
+    options: List[QuestionOptionSchema] = [] 
     quiz_id: int
 
     class Config:
         orm_mode = True
 
-class QuizBase(BaseModel):
+class QuestionResponse(QuestionSchema):
+    pass
+
+class QuizSchema(BaseModel):
     title: str
-    description: Optional[str]
     topic: str
     difficulty: DifficultyLevel
-    timer: Optional[int]
+    timer: int 
 
     class Config:
         orm_mode = True
 
-class QuizCreate(QuizBase):
+class QuizCreate(QuizSchema):
     pass
 
 class QuizUpdate(BaseModel):
     title: Optional[str]
-    description: Optional[str]
     topic: Optional[str]
     difficulty: Optional[DifficultyLevel]
     timer: Optional[int]
@@ -79,10 +70,5 @@ class QuizUpdate(BaseModel):
     class Config:
         orm_mode = True
 
-class QuizResponse(QuizBase):
+class QuizResponse(QuizSchema):
     id: int
-    questions: List[QuestionResponse] = []
-
-    class Config:
-        orm_mode = True
-
