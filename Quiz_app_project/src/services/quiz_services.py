@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 from src.schemas.quiz_schemas import QuizCreate, QuestionCreate, QuizUpdate, QuestionUpdate
-from src.repository.quiz_repository import QuizRepository, QuestionRepository
+from src.repository.quiz_repository import QuizRepository, QuestionRepository, QuizAttemptRepository
 import random
 from src.models.quiz_models import Quiz, Question, QuestionOption
 
 quiz_repo = QuizRepository()
 question_repo = QuestionRepository()
+quiz_attempt_repo = QuizAttemptRepository()
 
 def create_quiz_service(db: Session, quiz: QuizCreate):
     existing_quiz = quiz_repo.get_quiz_by_title(db, quiz.title)
@@ -96,3 +97,18 @@ def get_random_questions(db: Session, quiz_id: int, page: int = 1, page_size: in
         question.id = idx
     
     return paginated_questions
+
+def calculate_score(db: Session, quiz_id: int, answers: dict):
+    questions = db.query(Question).filter(Question.quiz_id == quiz_id).all()
+    score = 0
+    for question in questions:
+        if question.id in answers and question.correct_answer == answers[question.id]:
+            score += 1
+    return score / len(questions) * 100
+
+def create_quiz_attempt_service(db: Session, candidate_id: int, quiz_id: int, answers: dict):
+    score = calculate_score(db, quiz_id, answers)
+    return quiz_attempt_repo.create_quiz_attempt(db, candidate_id, quiz_id, score)
+
+def get_quiz_attempts_by_candidate_service(db: Session, candidate_id: int):
+    return quiz_attempt_repo.get_quiz_attempts_by_candidate(db, candidate_id)

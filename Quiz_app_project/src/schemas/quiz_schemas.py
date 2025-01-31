@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from enum import Enum
+from datetime import datetime
 
 class QuestionType(str, Enum):
     MCQ = "MCQ"
@@ -64,6 +65,19 @@ class QuizUpdate(BaseModel):
 class QuizResponse(QuizSchema):
     id: int
     questions: List[QuestionResponse]  # Include questions in the response
+
+    class Config:
+        orm_mode = True
+
+class QuizAttemptCreate(BaseModel):
+    answers: dict
+
+class QuizAttemptResponse(BaseModel):
+    id: int
+    candidate_id: int
+    quiz_id: int
+    score: float
+    timestamp: datetime
 
     class Config:
         orm_mode = True

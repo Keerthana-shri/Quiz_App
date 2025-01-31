@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from src.models.quiz_models import Quiz, Question, QuestionOption
+from src.models.quiz_models import Quiz, Question, QuestionOption, QuizAttempt
 from src.schemas.quiz_schemas import QuizCreate, QuestionCreate, QuizUpdate, QuestionUpdate
 
 class QuizRepository:
@@ -106,3 +106,14 @@ class QuestionRepository:
 
     def get_question_by_text_and_quiz(self, db: Session, text: str, quiz_id: int):
         return db.query(Question).filter(Question.text == text, Question.quiz_id == quiz_id).first()
+
+class QuizAttemptRepository:
+    def create_quiz_attempt(self, db: Session, candidate_id: int, quiz_id: int, score: float):
+        db_quiz_attempt = QuizAttempt(candidate_id=candidate_id, quiz_id=quiz_id, score=score)
+        db.add(db_quiz_attempt)
+        db.commit()
+        db.refresh(db_quiz_attempt)
+        return db_quiz_attempt
+
+    def get_quiz_attempts_by_candidate(self, db: Session, candidate_id: int):
+        return db.query(QuizAttempt).filter(QuizAttempt.candidate_id == candidate_id).all()

@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from src.schemas.quiz_schemas import QuizResponse
-from src.services.quiz_services import get_quiz_service, get_random_questions, get_quizzes_by_category
+from typing import List
+from src.schemas.quiz_schemas import QuizResponse, QuizAttemptCreate, QuizAttemptResponse
+from src.services.quiz_services import create_quiz_attempt_service, get_quizzes_by_category,get_quiz_service, get_quiz_attempts_by_candidate_service, get_random_questions
 from src.config.database import get_db
 from src.utils.dependencies import get_current_candidate
+from src.models.auth_models import User 
 
 router = APIRouter()
 
@@ -24,3 +26,14 @@ def get_quiz(quiz_id: int, db: Session = Depends(get_db)):
     if quiz is None:
         raise HTTPException(status_code=404, detail="Quiz not found.")
     return quiz
+
+@router.post("/quizzes/{quiz_id}/attempt", response_model=QuizAttemptResponse, dependencies=[Depends(get_current_candidate)])
+def attempt_quiz(quiz_id: int, answers: dict, db: Session = Depends(get_db), current_candidate: User = Depends(get_current_candidate)):
+    quiz_attempt = create_quiz_attempt_service(db, current_candidate.id, quiz_id, answers)
+    return quiz_attempt
+
+@router.get("/candidates/{candidate_id}/attempts", response_model=List[QuizAttemptResponse], dependencies=[Depends(get_current_candidate)])
+def get_quiz_attempts(candidate_id: int, db: Session = Depends(get_db), current_candidate: User = Depends(get_current_candidate)):
+    if candidate_id != current_candidate.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this candidate's attempts")
+    return get_quiz_attempts_by_candidate_service(db, candidate_id)

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, Float, DateTime
 from sqlalchemy.orm import relationship
 from src.utils.init_db import Base
+from datetime import datetime
 
 class Quiz(Base):
     __tablename__ = "quizzes"
@@ -10,6 +11,7 @@ class Quiz(Base):
     difficulty = Column(String, index=True, nullable=False)
     timer = Column(Integer, nullable=False)
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
+    quiz_attempts = relationship("QuizAttempt", back_populates="quiz")
 
 class Question(Base):
     __tablename__ = "questions"
@@ -30,3 +32,14 @@ class QuestionOption(Base):
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, nullable=False, default=False)
     question = relationship("Question", back_populates="options")
+
+class QuizAttempt(Base):
+    __tablename__ = "quiz_attempts"
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
+    score = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    candidate = relationship("User", back_populates="quiz_attempts")
+    quiz = relationship("Quiz", back_populates="quiz_attempts")
