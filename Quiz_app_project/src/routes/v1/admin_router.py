@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from src.schemas.quiz_schemas import QuizCreate, QuizResponse, QuizUpdate, QuestionCreate, QuestionResponse, QuestionUpdate
 from src.services.quiz_services import (
@@ -8,6 +8,7 @@ from src.services.quiz_services import (
 )
 from src.config.database import get_db
 from src.utils.dependencies import get_current_admin
+from src.services.quiz_services import upload_questions_from_csv
 
 router = APIRouter()
 
@@ -24,6 +25,17 @@ def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     if created_quiz is None:
         raise HTTPException(status_code=400, detail="Quiz with this title already exists.")
     return {"message": f"Quiz '{created_quiz.title}' with id {created_quiz.id} created successfully."}
+
+@router.post("/quizzes/upload", dependencies=[Depends(get_current_admin)])
+async def upload_quiz_questions(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if file.content_type != 'text/csv':
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV file.")
+    
+    result = await upload_questions_from_csv(file, db)
+    if result == "Success":
+        return {"message": "Questions uploaded successfully."}
+    else:
+        raise HTTPException(status_code=400, detail=result)
 
 @router.put("/quizzes/{quiz_id}", dependencies=[Depends(get_current_admin)])
 def update_quiz(quiz_id: int, quiz_update: QuizUpdate, db: Session = Depends(get_db)):

@@ -1,5 +1,7 @@
+import pandas as pd
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from src.schemas.quiz_schemas import QuizCreate, QuestionCreate, QuizUpdate, QuestionUpdate, QuizResponse, QuizCandidateResponse, QuizAttemptBaseResponse, QuizAttemptDetailedResponse
+from src.schemas.quiz_schemas import QuizCreate, QuestionType, QuestionCreate, QuizUpdate, QuestionUpdate, QuizResponse, QuizCandidateResponse, QuizAttemptBaseResponse, QuizAttemptDetailedResponse
 from src.repository.quiz_repository import QuizRepository, QuestionRepository, QuizAttemptRepository
 import random
 from src.models.quiz_models import Quiz, Question, QuestionOption, QuizAttempt
@@ -60,6 +62,60 @@ def create_question_service(db: Session, question: QuestionCreate):
     created_question = question_repo.create_question(db, question)
     return created_question, quiz
 
+async def upload_questions_from_csv(file: UploadFile, db: Session):
+    try:
+        df = pd.read_csv(file.file)
+        errors = []
+        for index, row in df.iterrows():
+            # Ensure all fields are strings where necessary and handle NaN values
+            text = str(row['text']) if not pd.isna(row['text']) else None
+            question_type = str(row['question_type']) if not pd.isna(row['question_type']) else None
+            correct_answer = str(row['correct_answer']) if not pd.isna(row['correct_answer']) else None
+            explanation = str(row['explanation']) if not pd.isna(row['explanation']) else None
+            image_url = str(row['image_url']) if not pd.isna(row['image_url']) else None
+            quiz_id = int(row['quiz_id']) if not pd.isna(row['quiz_id']) else None
+            options = str(row['options']) if not pd.isna(row['options']) else None
+
+            # Check if the quiz ID exists
+            if quiz_id is None or not db.query(Quiz).filter(Quiz.id == quiz_id).first():
+                errors.append(f"Quiz ID {quiz_id} does not exist.")
+                continue  # Skip this question and continue with the next one
+
+            # Check if the question already exists
+            if db.query(Question).filter(Question.text == text, Question.quiz_id == quiz_id).first():
+                continue  # Skip this question if it already exists
+
+            question = Question(
+                text=text,
+                question_type=QuestionType(question_type) if question_type else None,
+                correct_answer=correct_answer,
+                explanation=explanation,
+                image_url=image_url,
+                quiz_id=quiz_id
+            )
+            db.add(question)
+            db.commit()
+            db.refresh(question)
+            
+            if options:
+                options_list = options.split(';')
+                for option in options_list:
+                    option_text = option.strip()
+                    is_correct = (option_text == correct_answer)
+                    question_option = QuestionOption(
+                        option_text=option_text,
+                        is_correct=is_correct,
+                        question_id=question.id
+                    )
+                    db.add(question_option)
+                db.commit()
+        
+        if errors:
+            return {"message": "Some quiz IDs do not exist.", "errors": errors}
+        return "Success"
+    except Exception as e:
+        return str(e)
+
 def update_question_service(db: Session, question_id: int, question_update: QuestionUpdate):
     question = question_repo.get_question_by_id(db, question_id)
     if not question:
@@ -103,6 +159,7 @@ def get_random_questions(db: Session, quiz_id: int, page: int = 1, page_size: in
     candidate_questions = []
     for question in paginated_questions:
         candidate_question = {
+            "id": question.id,
             "text": question.text,
             "question_type": question.question_type,
             "image_url": question.image_url,

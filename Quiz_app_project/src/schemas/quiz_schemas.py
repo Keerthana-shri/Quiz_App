@@ -29,6 +29,7 @@ class QuestionOptionCandidateSchema(BaseModel):
         from_attributes = True
 
 class QuestionSchema(BaseModel):
+    id: int
     text: str
     question_type: QuestionType
     correct_answer: str
@@ -42,6 +43,7 @@ class QuestionSchema(BaseModel):
         from_attributes = True
 
 class QuestionCandidateSchema(BaseModel):
+    id: int    
     text: str
     question_type: QuestionType
     image_url: Optional[str] = None
@@ -142,4 +144,12 @@ class QuizAttemptDetailedResponse(QuizAttemptBaseResponse):
     class Config:
         orm_mode = True
         from_attributes = True
+
+class LeaderboardResponse(BaseModel):
+    candidate_id: int
+    username: str
+    total_score: float
+
+    class Config:
+        orm_mode = True
 
