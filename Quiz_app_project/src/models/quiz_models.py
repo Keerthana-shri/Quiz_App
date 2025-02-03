@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, Float, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, Float, DateTime, JSON
 from sqlalchemy.orm import relationship
 from src.utils.init_db import Base
 from datetime import datetime
@@ -23,7 +23,7 @@ class Question(Base):
     explanation = Column(Text, nullable=True)
     image_url = Column(String, nullable=True)
     quiz = relationship("Quiz", back_populates="questions")
-    options = relationship("QuestionOption", back_populates="question")
+    options = relationship("QuestionOption", back_populates="question", cascade="all, delete-orphan")
 
 class QuestionOption(Base):
     __tablename__ = "question_options"
@@ -38,8 +38,15 @@ class QuizAttempt(Base):
     id = Column(Integer, primary_key=True, index=True)
     candidate_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
-    score = Column(Float, nullable=False)
+    score = Column(Float, nullable=True)
+    correct_answers = Column(Integer, nullable=True)
+    wrong_answers = Column(Integer, nullable=True)
+    attempt_number = Column(Integer, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    start_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+    answers = Column(JSON, nullable=True)
 
     candidate = relationship("User", back_populates="quiz_attempts")
     quiz = relationship("Quiz", back_populates="quiz_attempts")
+

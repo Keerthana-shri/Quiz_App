@@ -11,6 +11,13 @@ from src.utils.dependencies import get_current_admin
 
 router = APIRouter()
 
+@router.get("/quizzes/{quiz_id}", response_model=QuizResponse, dependencies=[Depends(get_current_admin)])
+def get_quiz_by_id(quiz_id: int, db: Session = Depends(get_db)):
+    quiz = get_quiz_service(db, quiz_id, is_admin=True)
+    if quiz is None:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+    return quiz 
+
 @router.post("/quizzes/", dependencies=[Depends(get_current_admin)])
 def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
     created_quiz = create_quiz_service(db, quiz)

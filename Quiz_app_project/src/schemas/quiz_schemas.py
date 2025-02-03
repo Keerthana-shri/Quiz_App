@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 from enum import Enum
 from datetime import datetime
 
@@ -11,14 +11,22 @@ class QuestionType(str, Enum):
 class DifficultyLevel(str, Enum):
     EASY = "Easy"
     MEDIUM = "Medium"
-    HARD = "HARD"
+    HARD = "Hard"
 
 class QuestionOptionSchema(BaseModel):
     option_text: str
-    is_correct: Optional[bool] = None  # Made is_correct optional
+    is_correct: Optional[bool] = None
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class QuestionOptionCandidateSchema(BaseModel):
+    option_text: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 class QuestionSchema(BaseModel):
     text: str
@@ -26,11 +34,23 @@ class QuestionSchema(BaseModel):
     correct_answer: str
     explanation: Optional[str] = None
     image_url: Optional[str] = None
-    options: List[QuestionOptionSchema] = [] 
+    options: List[QuestionOptionSchema] = []
     quiz_id: int
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class QuestionCandidateSchema(BaseModel):
+    text: str
+    question_type: QuestionType
+    image_url: Optional[str] = None
+    options: List[QuestionOptionCandidateSchema] = []
+    quiz_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 class QuestionCreate(QuestionSchema):
     pass
@@ -41,10 +61,17 @@ class QuestionUpdate(BaseModel):
     correct_answer: Optional[str]
     explanation: Optional[str] = None
     image_url: Optional[str] = None
-    options: List[QuestionOptionSchema] = [] 
+    options: List[QuestionOptionSchema] = []
     quiz_id: Optional[int]
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 class QuestionResponse(QuestionSchema):
+    pass
+
+class QuestionCandidateResponse(QuestionCandidateSchema):
     pass
 
 class QuizSchema(BaseModel):
@@ -53,31 +80,66 @@ class QuizSchema(BaseModel):
     difficulty: DifficultyLevel
     timer: int 
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 class QuizCreate(QuizSchema):
     pass
 
 class QuizUpdate(BaseModel):
-    title: Optional[str]
-    topic: Optional[str]
-    difficulty: Optional[DifficultyLevel]
-    timer: Optional[int]
-
-class QuizResponse(QuizSchema):
-    id: int
-    questions: List[QuestionResponse]  # Include questions in the response
+    title: Optional[str] =None
+    topic: Optional[str] =None
+    difficulty: Optional[DifficultyLevel] =None
+    timer: Optional[int] =None
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class QuizResponse(QuizSchema):
+    id: int
+    questions: List[QuestionResponse]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+class QuizCandidateResponse(QuizSchema):
+    id: int
+    questions: List[QuestionCandidateResponse]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 class QuizAttemptCreate(BaseModel):
     answers: dict
 
-class QuizAttemptResponse(BaseModel):
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+class QuizAttemptBaseResponse(BaseModel):
     id: int
     candidate_id: int
     quiz_id: int
-    score: float
+    attempt_number: int
     timestamp: datetime
+    start_time: datetime
+    end_time: datetime
+    answers: Dict[str, str]
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class QuizAttemptDetailedResponse(QuizAttemptBaseResponse):
+    score: Optional[float]
+    correct_answers: Optional[int]
+    wrong_answers: Optional[int]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
