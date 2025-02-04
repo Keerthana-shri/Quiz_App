@@ -20,7 +20,7 @@ class UserSchema(UserBase):
         from_attributes = True
 
 class UserResponse(UserSchema):
-    pass  # Alias for clarity in response models
+    pass 
 
 class Token(BaseModel):
     access_token: str
