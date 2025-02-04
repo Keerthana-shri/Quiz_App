@@ -18,4 +18,3 @@ def read_root():
 
 app.include_router(api_router)
 
-
