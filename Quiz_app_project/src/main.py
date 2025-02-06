@@ -17,4 +17,3 @@ def read_root():
     return {"message": "Welcome to the Quiz App!"}
 
 app.include_router(api_router)
-

@@ -1,7 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, Float, DateTime, JSON
 from sqlalchemy.orm import relationship
-from src.utils.init_db import Base
 from datetime import datetime
+from enum import Enum
+
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base()
 
 class Quiz(Base):
     __tablename__ = "quizzes"
@@ -49,4 +53,16 @@ class QuizAttempt(Base):
 
     candidate = relationship("User", back_populates="quiz_attempts")
     quiz = relationship("Quiz", back_populates="quiz_attempts")
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    CANDIDATE = "candidate"
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, nullable=False, default=UserRole.CANDIDATE.value)
+    quiz_attempts = relationship("QuizAttempt", back_populates="candidate")
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from src.config.database import get_db
 from src.models.quiz_models import QuizAttempt
-from src.models.auth_models import User
+from src.models.quiz_models import User
 from src.schemas.quiz_schemas import LeaderboardResponse
 from typing import List
 

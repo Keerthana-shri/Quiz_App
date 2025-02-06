@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from src.config.settings import app_config
 from src.config.database import get_db
-from src.models.auth_models import User, UserRole
+from src.models.quiz_models import User, UserRole
 
 class JWTBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):

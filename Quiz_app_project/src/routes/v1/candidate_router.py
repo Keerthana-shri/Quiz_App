@@ -5,7 +5,7 @@ from src.schemas.quiz_schemas import QuizCandidateResponse, QuizAttemptBaseRespo
 from src.services.quiz_services import create_quiz_attempt_service, get_quizzes_by_category, get_quiz_service, get_quiz_attempts_by_candidate_service, get_random_questions, calculate_score_for_attempt
 from src.config.database import get_db
 from src.utils.dependencies import get_current_candidate
-from src.models.auth_models import User 
+from src.models.quiz_models import User 
 
 router = APIRouter()
 
